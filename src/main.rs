@@ -13,7 +13,7 @@ fn main() {
         .run();
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 struct Shape;
 
 fn spawn_basic_scene(
@@ -63,10 +63,23 @@ fn spawn_basic_scene(
     });
 }
 
-fn update_graph_system(time: Res<Time>, mut query: Query<&mut Transform, With<Shape>>) {
+fn update_graph_system(
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &Handle<StandardMaterial>), With<Shape>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     let now = time.elapsed_seconds();
-    for mut transform in &mut query {
+
+    for (mut transform, material) in &mut query {
         let x = transform.translation.x;
-        transform.translation.y = (PI * (x + now)).sin();
+        let y = (PI * (x + now)).sin();
+        transform.translation.y = y;
+
+        if let Some(mat) = materials.get_mut(material) {
+            let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
+            let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
+
+            mat.base_color = Color::rgb_u8(r, g, 0);
+        }
     }
 }
