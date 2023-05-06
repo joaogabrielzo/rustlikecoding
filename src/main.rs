@@ -10,21 +10,14 @@ fn main() {
     App::new()
         .insert_resource(ClearColor(Color::rgb(0.2, 0.2, 0.2)))
         .add_startup_system(spawn_basic_scene)
-        .add_plugins(
-            DefaultPlugins
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Rust Like Coding".into(),
-                        present_mode: PresentMode::Immediate,
-                        ..default()
-                    }),
-                    ..default()
-                })
-                .set(AssetPlugin {
-                    watch_for_changes: true,
-                    ..default()
-                }),
-        )
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Rust Like Coding".into(),
+                present_mode: PresentMode::Immediate,
+                ..default()
+            }),
+            ..default()
+        }))
         // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
@@ -36,37 +29,23 @@ fn main() {
 #[derive(Component)]
 struct Shape;
 
+const RESOLUTION: i32 = 50;
+
 fn spawn_basic_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<GraphMaterial>>,
 ) {
-    let resolution = 50;
-    let step = 2.0 / resolution as f32;
-
-    let mut x = 0;
-    let mut z = 0;
-    for _ in 0..(resolution * resolution) {
-        if x == resolution {
-            x = 0;
-            z += 1;
-        }
-
-        let x_axis = (x as f32 + 0.5) * step - 1.0;
-        let z_axis = (z as f32 + 0.5) * step - 1.0;
-        let y = (x * x * x) as f32;
-
+    let step = 2.0 / RESOLUTION as f32;
+    for _ in 0..(RESOLUTION * RESOLUTION) {
         commands.spawn((
             MaterialMeshBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 * step })),
                 material: materials.add(GraphMaterial {}),
-                transform: Transform::from_xyz(x_axis, y, z_axis),
                 ..default()
             },
             Shape,
         ));
-
-        x += 1;
     }
 
     // light
@@ -81,19 +60,30 @@ fn spawn_basic_scene(
     });
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-1.0, 1.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 2.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
 
 fn update_graph_system(time: Res<Time>, mut query: Query<&mut Transform, With<Shape>>) {
     let t = time.elapsed_seconds();
+    let step = 2.0 / RESOLUTION as f32;
+    let mut x = 0.0;
+    let mut z = 0.0;
+    let mut v = 0.5 * step - 1.0;
 
     for mut transform in &mut query {
-        let x = transform.translation.x;
-        let z = transform.translation.z;
-        let y = wave(x, z, t);
-        transform.translation.y = y;
+        if x == RESOLUTION as f32 {
+            x = 0.0;
+            z += 1.0;
+            v = (z + 0.5) * step - 1.0;
+        }
+
+        let u = (x + 0.5) * step - 1.0;
+
+        transform.translation = torus(u, v, t);
+
+        x += 1.0;
     }
 }
 

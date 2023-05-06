@@ -1,20 +1,56 @@
 use std::f32::consts::PI;
 
-pub fn wave(x: f32, z: f32, t: f32) -> f32 {
-    (PI * (x + z + t)).sin()
+use bevy::prelude::Vec3;
+
+pub fn wave(u: f32, v: f32, t: f32) -> Vec3 {
+    let x = u;
+    let y = (PI * (u + v + t)).sin();
+    let z = v;
+
+    Vec3 { x, y, z }
 }
 
-pub fn multi_wave(x: f32, z: f32, t: f32) -> f32 {
-    let mut y = (PI * (x + t * 0.5)).sin();
-    y += (2.0 * PI * (z + t)).sin() * 0.5;
-    y += (PI * (x + z + t * 0.25)).sin();
+pub fn multi_wave(u: f32, v: f32, t: f32) -> Vec3 {
+    let x = u;
+    let mut y = (PI * (u + t * 0.5)).sin();
+    y += (2.0 * PI * (v + t)).sin() * 0.5;
+    y += (PI * (u + v + t * 0.25)).sin();
+    y *= 1.0 / 2.5;
+    let z = v;
 
-    return y * (1.0 / 2.5);
+    return Vec3 { x, y, z };
 }
 
-pub fn ripple(x: f32, z: f32, t: f32) -> f32 {
-    let d = (x * x + z * z).sqrt();
-    let y = (PI * (4.0 * d - t)).sin();
+pub fn ripple(u: f32, v: f32, t: f32) -> Vec3 {
+    let d = (u * u + v * v).sqrt();
 
-    return y / (1.0 + 10.0 * d);
+    let x = u;
+    let mut y = (PI * (4.0 * d - t)).sin();
+    y /= 1.0 + 10.0 * d;
+    let z = v;
+
+    return Vec3 { x, y, z };
+}
+
+pub fn sphere(u: f32, v: f32, t: f32) -> Vec3 {
+    let r = 0.9 + 0.1 * (PI * (6.0 * u + 4.0 * v + t)).sin();
+    let s = r * (PI * 0.5 * v).cos();
+
+    let x = s * (PI * u).sin();
+    let y = r * (PI * 0.5 * v).sin();
+    let z = s * (PI * u).cos();
+
+    return Vec3 { x, y, z };
+}
+
+pub fn torus(u: f32, v: f32, t: f32) -> Vec3 {
+    let r1 = 0.7 + 0.1 * (PI * (6.0 * u + 0.5 * t)).sin();
+    let r2 = 0.15 + 0.05 * (PI * (8.0 * u + 4.0 * v + 2.0 * t)).sin();
+    let s = r1 + r2 * (PI * v).cos();
+
+    let x = s * (PI * u).sin();
+    let y = r2 * (PI * v).sin();
+    let z = s * (PI * u).cos();
+
+    return Vec3 { x, y, z };
 }
