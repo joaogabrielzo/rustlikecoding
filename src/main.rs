@@ -19,8 +19,8 @@ fn main() {
             }),
             ..default()
         }))
-        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(MaterialPlugin::<GraphMaterial>::default())
         .add_system(update_graph_system)
@@ -41,9 +41,6 @@ fn spawn_basic_scene(
     for i in 0..resolution {
         let x = 1.0 * (i as f32 + 0.5) * step - 1.0;
         let y = x * x * x;
-
-        // let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
-        // let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
 
         commands.spawn((
             MaterialMeshBundle {
@@ -76,7 +73,6 @@ fn spawn_basic_scene(
 fn update_graph_system(
     time: Res<Time>,
     mut query: Query<&mut Transform, With<Shape>>,
-    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let now = time.elapsed_seconds();
 
@@ -84,13 +80,6 @@ fn update_graph_system(
         let x = transform.translation.x;
         let y = (PI * (x + now)).sin();
         transform.translation.y = y;
-
-        // if let Some(mat) = materials.get_mut(material) {
-        //     let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
-        //     let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
-
-        //     mat.base_color = Color::rgb_u8(r, g, 0);
-        // }
     }
 }
 
