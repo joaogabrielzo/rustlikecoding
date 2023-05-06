@@ -1,25 +1,39 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy::reflect::TypeUuid;
+use bevy::render::render_resource::AsBindGroup;
+use bevy::render::render_resource::ShaderRef;
+use bevy::window::PresentMode;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::rgb(0.2, 0.2, 0.2)))
         .add_startup_system(spawn_basic_scene)
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Rust Like Coding".into(),
+                present_mode: PresentMode::Immediate,
+                ..default()
+            }),
+            ..default()
+        }))
+        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
+        .add_plugin(MaterialPlugin::<GraphMaterial>::default())
         .add_system(update_graph_system)
         .run();
 }
 
-#[derive(Component, Default)]
+#[derive(Component)]
 struct Shape;
 
 fn spawn_basic_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<GraphMaterial>>,
 ) {
     let resolution = 50;
     let step = 2.0 / resolution as f32;
@@ -28,17 +42,13 @@ fn spawn_basic_scene(
         let x = 1.0 * (i as f32 + 0.5) * step - 1.0;
         let y = x * x * x;
 
-        let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
-        let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
+        // let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
+        // let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
 
         commands.spawn((
-            PbrBundle {
+            MaterialMeshBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 * step })),
-                material: materials.add(StandardMaterial {
-                    base_color: Color::rgb_u8(r, g, 0),
-                    metallic: 0.7,
-                    ..default()
-                }),
+                material: materials.add(GraphMaterial {}),
                 transform: Transform::from_xyz(x, y, 0.0),
                 ..default()
             },
@@ -65,21 +75,35 @@ fn spawn_basic_scene(
 
 fn update_graph_system(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &Handle<StandardMaterial>), With<Shape>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut query: Query<&mut Transform, With<Shape>>,
+    // mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let now = time.elapsed_seconds();
 
-    for (mut transform, material) in &mut query {
+    for mut transform in &mut query {
         let x = transform.translation.x;
         let y = (PI * (x + now)).sin();
         transform.translation.y = y;
 
-        if let Some(mat) = materials.get_mut(material) {
-            let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
-            let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
+        // if let Some(mat) = materials.get_mut(material) {
+        //     let r = (255.0 * (x * 0.5 + 0.5)).floor() as u8;
+        //     let g = (255.0 * (y * 0.5 + 0.5)).floor() as u8;
 
-            mat.base_color = Color::rgb_u8(r, g, 0);
-        }
+        //     mat.base_color = Color::rgb_u8(r, g, 0);
+        // }
+    }
+}
+
+#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
+#[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e0"]
+struct GraphMaterial {}
+
+impl Material for GraphMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/graph_shader.wgsl".into()
+    }
+
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Opaque
     }
 }
