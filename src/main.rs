@@ -1,11 +1,10 @@
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use bevy::render::render_resource::AsBindGroup;
 use bevy::render::render_resource::ShaderRef;
 use bevy::window::PresentMode;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use rustlikecoding::ripple;
 
 fn main() {
     App::new()
@@ -71,11 +70,11 @@ fn spawn_basic_scene(
 }
 
 fn update_graph_system(time: Res<Time>, mut query: Query<&mut Transform, With<Shape>>) {
-    let now = time.elapsed_seconds();
+    let t = time.elapsed_seconds();
 
     for mut transform in &mut query {
         let x = transform.translation.x;
-        let y = (PI * (x + now)).sin();
+        let y = ripple(x, t);
         transform.translation.y = y;
     }
 }
