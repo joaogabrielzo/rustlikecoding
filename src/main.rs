@@ -4,20 +4,27 @@ use bevy::render::render_resource::AsBindGroup;
 use bevy::render::render_resource::ShaderRef;
 use bevy::window::PresentMode;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use rustlikecoding::ripple;
+use rustlikecoding::*;
 
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::rgb(0.2, 0.2, 0.2)))
         .add_startup_system(spawn_basic_scene)
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Rust Like Coding".into(),
-                present_mode: PresentMode::Immediate,
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Rust Like Coding".into(),
+                        present_mode: PresentMode::Immediate,
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(AssetPlugin {
+                    watch_for_changes: true,
+                    ..default()
+                }),
+        )
         // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
@@ -37,26 +44,36 @@ fn spawn_basic_scene(
     let resolution = 50;
     let step = 2.0 / resolution as f32;
 
-    for i in 0..resolution {
-        let x = 1.0 * (i as f32 + 0.5) * step - 1.0;
-        let y = x * x * x;
+    let mut x = 0;
+    let mut z = 0;
+    for _ in 0..(resolution * resolution) {
+        if x == resolution {
+            x = 0;
+            z += 1;
+        }
+
+        let x_axis = (x as f32 + 0.5) * step - 1.0;
+        let z_axis = (z as f32 + 0.5) * step - 1.0;
+        let y = (x * x * x) as f32;
 
         commands.spawn((
             MaterialMeshBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 * step })),
                 material: materials.add(GraphMaterial {}),
-                transform: Transform::from_xyz(x, y, 0.0),
+                transform: Transform::from_xyz(x_axis, y, z_axis),
                 ..default()
             },
             Shape,
         ));
+
+        x += 1;
     }
 
     // light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             intensity: 1500.0,
-            shadows_enabled: false,
+            shadows_enabled: true,
             ..default()
         },
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
@@ -64,7 +81,7 @@ fn spawn_basic_scene(
     });
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(-1.0, 1.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
@@ -74,7 +91,8 @@ fn update_graph_system(time: Res<Time>, mut query: Query<&mut Transform, With<Sh
 
     for mut transform in &mut query {
         let x = transform.translation.x;
-        let y = ripple(x, t);
+        let z = transform.translation.z;
+        let y = wave(x, z, t);
         transform.translation.y = y;
     }
 }
