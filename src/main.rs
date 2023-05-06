@@ -19,8 +19,8 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(MaterialPlugin::<GraphMaterial>::default())
         .add_system(update_graph_system)
@@ -70,10 +70,7 @@ fn spawn_basic_scene(
     });
 }
 
-fn update_graph_system(
-    time: Res<Time>,
-    mut query: Query<&mut Transform, With<Shape>>,
-) {
+fn update_graph_system(time: Res<Time>, mut query: Query<&mut Transform, With<Shape>>) {
     let now = time.elapsed_seconds();
 
     for mut transform in &mut query {
