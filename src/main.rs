@@ -1,11 +1,10 @@
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use bevy::render::render_resource::AsBindGroup;
 use bevy::render::render_resource::ShaderRef;
 use bevy::window::PresentMode;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use rustlikecoding::*;
 
 fn main() {
     App::new()
@@ -19,8 +18,8 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(MaterialPlugin::<GraphMaterial>::default())
         .add_system(update_graph_system)
@@ -30,23 +29,19 @@ fn main() {
 #[derive(Component)]
 struct Shape;
 
+const RESOLUTION: i32 = 50;
+
 fn spawn_basic_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<GraphMaterial>>,
 ) {
-    let resolution = 50;
-    let step = 2.0 / resolution as f32;
-
-    for i in 0..resolution {
-        let x = 1.0 * (i as f32 + 0.5) * step - 1.0;
-        let y = x * x * x;
-
+    let step = 2.0 / RESOLUTION as f32;
+    for _ in 0..(RESOLUTION * RESOLUTION) {
         commands.spawn((
             MaterialMeshBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 * step })),
                 material: materials.add(GraphMaterial {}),
-                transform: Transform::from_xyz(x, y, 0.0),
                 ..default()
             },
             Shape,
@@ -57,7 +52,7 @@ fn spawn_basic_scene(
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             intensity: 1500.0,
-            shadows_enabled: false,
+            shadows_enabled: true,
             ..default()
         },
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
@@ -65,21 +60,30 @@ fn spawn_basic_scene(
     });
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 2.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
 
-fn update_graph_system(
-    time: Res<Time>,
-    mut query: Query<&mut Transform, With<Shape>>,
-) {
-    let now = time.elapsed_seconds();
+fn update_graph_system(time: Res<Time>, mut query: Query<&mut Transform, With<Shape>>) {
+    let t = time.elapsed_seconds();
+    let step = 2.0 / RESOLUTION as f32;
+    let mut x = 0.0;
+    let mut z = 0.0;
+    let mut v = 0.5 * step - 1.0;
 
     for mut transform in &mut query {
-        let x = transform.translation.x;
-        let y = (PI * (x + now)).sin();
-        transform.translation.y = y;
+        if x == RESOLUTION as f32 {
+            x = 0.0;
+            z += 1.0;
+            v = (z + 0.5) * step - 1.0;
+        }
+
+        let u = (x + 0.5) * step - 1.0;
+
+        transform.translation = torus(u, v, t);
+
+        x += 1.0;
     }
 }
 

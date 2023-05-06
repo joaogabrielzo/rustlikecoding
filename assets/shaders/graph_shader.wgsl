@@ -5,5 +5,6 @@ fn fragment(
     @location(1) normals: vec3<f32>,
     @location(2) uv: vec2<f32>
 ) -> @location(0) vec4<f32> {
-    return world_position;
+
+    return world_position * 0.5 + 0.5;
 }
