@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use bevy::prelude::Vec3;
 
+pub type MathFunction = fn(f32, f32, f32) -> Vec3;
+
 pub fn wave(u: f32, v: f32, t: f32) -> Vec3 {
     let x = u;
     let y = (PI * (u + v + t)).sin();
@@ -53,4 +55,27 @@ pub fn torus(u: f32, v: f32, t: f32) -> Vec3 {
     let z = s * (PI * u).cos();
 
     return Vec3 { x, y, z };
+}
+
+pub fn morph(u: f32, v: f32, t: f32, from: MathFunction, to: MathFunction, progress: f32) -> Vec3 {
+    let lhs = from(u, v, t);
+    let rhs = to(u, v, t);
+
+    return lhs.lerp(rhs, smoothstep(0.0, 1.0, progress));
+}
+
+fn smoothstep(low: f32, high: f32, x: f32) -> f32 {
+    let x = clamp((x - low) / (high - low));
+
+    return x * x * (3.0 - 2.0 * x);
+}
+
+fn clamp(x: f32) -> f32 {
+    if x > 1.0 {
+        return 1.0;
+    } else if x < 0.0 {
+        return 0.0;
+    }
+
+    return x;
 }
