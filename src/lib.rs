@@ -61,7 +61,7 @@ pub fn morph(u: f32, v: f32, t: f32, from: MathFunction, to: MathFunction, progr
     let lhs = from(u, v, t);
     let rhs = to(u, v, t);
 
-    return lhs.lerp(rhs, smoothstep(0.0, 1.0, progress))
+    return lhs.lerp(rhs, smoothstep(0.0, 1.0, progress));
 }
 
 fn smoothstep(low: f32, high: f32, x: f32) -> f32 {
