@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::reflect::TypeUuid;
+use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::window::PresentMode;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
@@ -14,57 +16,52 @@ fn main() {
             }),
             ..default()
         }))
-        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::defaultMathFunction())
+        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(MaterialPlugin::<CustomMaterial>::default())
         .add_plugin(WorldInspectorPlugin::new())
         .run();
 }
 
-const GRID_RESOLUTION: i32 = 10;
-
 fn spawn_basic_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<CustomMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
-    for z in 0..GRID_RESOLUTION {
-        for y in 0..GRID_RESOLUTION {
-            for x in 0..GRID_RESOLUTION {
-                commands.spawn((
-                    MaterialMeshBundle {
-                        mesh: meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
-                        transform: Transform::from_translation(get_coordinates(x, y, z)),
-                        material: materials.add(StandardMaterial {
-                            base_color: Color::rgb(
-                                x as f32 / GRID_RESOLUTION as f32,
-                                y as f32 / GRID_RESOLUTION as f32,
-                                z as f32 / GRID_RESOLUTION as f32,
-                            ),
-                            ..default()
-                        }),
-                        visibility: Visibility::Visible,
-                        ..default()
-                    },
-                    Shape,
-                ));
-            }
-        }
-    }
+    commands.spawn((
+        MaterialMeshBundle {
+            mesh: meshes.add(
+                Mesh::try_from(shape::Icosphere {
+                    radius: 7.0,
+                    subdivisions: 36,
+                })
+                .unwrap(),
+            ),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            material: materials.add(CustomMaterial {
+                color: Color::SEA_GREEN,
+                texture: Some(asset_server.load("rlc_tex.png")),
+            }),
+            ..default()
+        },
+        Shape,
+    ));
 
-    commands.insert_resource(AmbientLight {
-        color: Color::WHITE,
-        brightness: 1.0,
-    });
-
-    // commands.spawn(PointLightBundle {
-    //     point_light: PointLight {
-    //         intensity: 1500.0,
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     transform: Transform::from_xyz(4.0, 8.0, 4.0),
-    //     ..default()
+    // commands.insert_resource(AmbientLight {
+    //     color: Color::WHITE,
+    //     brightness: 1.0,
     // });
+
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 7.0),
+        ..default()
+    });
 
     // camera
     commands.spawn(Camera3dBundle {
@@ -73,13 +70,21 @@ fn spawn_basic_scene(
     });
 }
 
-fn get_coordinates(x: i32, y: i32, z: i32) -> Vec3 {
-    return Vec3 {
-        x: x as f32 - (GRID_RESOLUTION - 1) as f32 * 0.5,
-        y: y as f32 - (GRID_RESOLUTION - 1) as f32 * 0.5,
-        z: z as f32 - (GRID_RESOLUTION - 1) as f32 * 0.5,
-    };
-}
-
 #[derive(Component)]
 struct Shape;
+
+#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
+#[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e0"]
+struct CustomMaterial {
+    #[uniform(0)]
+    color: Color,
+    #[texture(1)]
+    #[sampler(2)]
+    texture: Option<Handle<Image>>,
+}
+
+impl Material for CustomMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/custom_material.wgsl".into()
+    }
+}
