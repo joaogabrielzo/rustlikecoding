@@ -4,10 +4,16 @@ struct CustomMaterial {
 
 @group(1) @binding(0)
 var <uniform> material: CustomMaterial;
+
 @group(1) @binding(1)
 var base_texture: texture_2d<f32>;
 @group(1) @binding(2)
 var base_sampler: sampler;
+
+@group(1) @binding(3)
+var detail_texture: texture_2d<f32>;
+@group(1) @binding(4)
+var detail_sampler: sampler;
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
@@ -20,5 +26,10 @@ struct VertexOutput {
 fn fragment(
     input: VertexOutput
 ) -> @location(0) vec4<f32> {
-    return textureSample(base_texture, base_sampler, input.uv);
+    let detail_tex = textureSample(detail_texture, detail_sampler, input.uv * 10.0);
+
+    var tex = textureSample(base_texture, base_sampler, input.uv);
+    tex *= tex * detail_tex;
+
+    return tex;
 }
