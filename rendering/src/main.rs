@@ -1,6 +1,7 @@
+use bevy::prelude::shape::Quad;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
-use bevy::render::render_resource::{AsBindGroup, ShaderRef, SamplerDescriptor, AddressMode};
+use bevy::render::render_resource::{AddressMode, AsBindGroup, SamplerDescriptor, ShaderRef};
 use bevy::window::PresentMode;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
@@ -49,36 +50,40 @@ fn spawn_basic_scene(
             //     })
             //     .unwrap(),
             // ),
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
+            // mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
+            mesh: meshes.add(Mesh::from(Quad::new(Vec2 { x: 10.0, y: 10.0 }))),
             transform: Transform::from_xyz(0.0, 0.0, 0.0),
             material: materials.add(CustomMaterial {
                 color: Color::SEA_GREEN,
-                texture: Some(asset_server.load("distorted_grid_tex.png")),
-                detail_texture: Some(asset_server.load("grid_detail_tex.png")),
+                marble_texture: Some(asset_server.load("marble_tex.png")),
+                marble_detail_texture: Some(asset_server.load("marble_detail_tex.png")),
+                grid_texture: Some(asset_server.load("distorted_grid_tex.png")),
+                grid_detail_texture: Some(asset_server.load("grid_detail_tex.png")),
+                splat_map_texture: Some(asset_server.load("binary_splat_map.png")),
             }),
             ..default()
         },
         Shape,
     ));
 
-    // commands.insert_resource(AmbientLight {
-    //     color: Color::WHITE,
-    //     brightness: 1.0,
-    // });
-
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(4.0, 8.0, 7.0),
-        ..default()
+    commands.insert_resource(AmbientLight {
+        color: Color::WHITE,
+        brightness: 1.0,
     });
+
+    // commands.spawn(PointLightBundle {
+    //     point_light: PointLight {
+    //         intensity: 1500.0,
+    //         shadows_enabled: true,
+    //         ..default()
+    //     },
+    //     transform: Transform::from_xyz(4.0, 8.0, 7.0),
+    //     ..default()
+    // });
 
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 30.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
@@ -93,10 +98,19 @@ struct CustomMaterial {
     color: Color,
     #[texture(1)]
     #[sampler(2)]
-    texture: Option<Handle<Image>>,
+    grid_texture: Option<Handle<Image>>,
     #[texture(3)]
     #[sampler(4)]
-    detail_texture: Option<Handle<Image>>,
+    grid_detail_texture: Option<Handle<Image>>,
+    #[texture(5)]
+    #[sampler(6)]
+    marble_texture: Option<Handle<Image>>,
+    #[texture(7)]
+    #[sampler(8)]
+    marble_detail_texture: Option<Handle<Image>>,
+    #[texture(9)]
+    #[sampler(10)]
+    splat_map_texture: Option<Handle<Image>>,
 }
 
 impl Material for CustomMaterial {
