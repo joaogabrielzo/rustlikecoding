@@ -1,4 +1,6 @@
-use bevy::prelude::shape::Quad;
+use std::f32::consts::PI;
+
+use bevy::pbr::CascadeShadowConfigBuilder;
 use bevy::prelude::*;
 use bevy::reflect::TypeUuid;
 use bevy::render::render_resource::{AddressMode, AsBindGroup, SamplerDescriptor, ShaderRef};
@@ -32,6 +34,7 @@ fn main() {
         // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .add_plugin(MaterialPlugin::<CustomMaterial>::default())
         .add_plugin(WorldInspectorPlugin::new())
+        .add_system(animate_light_direction)
         .run();
 }
 
@@ -39,51 +42,70 @@ fn spawn_basic_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CustomMaterial>>,
-    asset_server: Res<AssetServer>,
+    assert_server: Res<AssetServer>,
 ) {
     commands.spawn((
         MaterialMeshBundle {
-            // mesh: meshes.add(
-            //     Mesh::try_from(shape::Icosphere {
-            //         radius: 7.0,
-            //         subdivisions: 36,
-            //     })
-            //     .unwrap(),
-            // ),
-            // mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
-            mesh: meshes.add(Mesh::from(Quad::new(Vec2 { x: 10.0, y: 10.0 }))),
-            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
+            transform: Transform {
+                translation: Vec3 {
+                    x: -10.0,
+                    y: 5.0,
+                    z: 4.0,
+                },
+                rotation: Quat::from_rotation_y(3.0),
+                scale: Vec3::ONE,
+            },
             material: materials.add(CustomMaterial {
-                color: Color::SEA_GREEN,
-                marble_texture: Some(asset_server.load("marble_tex.png")),
-                marble_detail_texture: Some(asset_server.load("marble_detail_tex.png")),
-                grid_texture: Some(asset_server.load("distorted_grid_tex.png")),
-                grid_detail_texture: Some(asset_server.load("grid_detail_tex.png")),
-                splat_map_texture: Some(asset_server.load("binary_splat_map.png")),
+                color: Color::SEA_GREEN.as_rgba_linear(),
+                texture: Some(assert_server.load("marble_tex.png"))
             }),
             ..default()
         },
         Shape,
     ));
 
-    commands.insert_resource(AmbientLight {
-        color: Color::WHITE,
-        brightness: 1.0,
-    });
+    commands.spawn((
+        MaterialMeshBundle {
+            mesh: meshes.add(Mesh::from(shape::UVSphere {
+                radius: 7.0,
+                ..Default::default()
+            })),
+            transform: Transform::from_xyz(5.0, 0.0, 0.0),
+            material: materials.add(CustomMaterial {
+                color: Color::SEA_GREEN,
+                texture: Some(assert_server.load("marble_tex.png"))
+            }),
+            ..default()
+        },
+        Shape,
+    ));
 
-    // commands.spawn(PointLightBundle {
-    //     point_light: PointLight {
-    //         intensity: 1500.0,
-    //         shadows_enabled: true,
-    //         ..default()
-    //     },
-    //     transform: Transform::from_xyz(4.0, 8.0, 7.0),
-    //     ..default()
-    // });
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform {
+            translation: Vec3::new(0.0, 2.0, 0.0),
+            rotation: Quat::from_rotation_x(-PI / 4.),
+            ..default()
+        },
+        // The default cascade config is designed to handle large scenes.
+        // As this example has a much smaller world, we can tighten the shadow
+        // bounds for better visual quality.
+        cascade_shadow_config: CascadeShadowConfigBuilder {
+            first_cascade_far_bound: 4.0,
+            maximum_distance: 10.0,
+            ..default()
+        }
+        .into(),
+        ..default()
+    });
 
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 20.0, 45.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
@@ -98,23 +120,20 @@ struct CustomMaterial {
     color: Color,
     #[texture(1)]
     #[sampler(2)]
-    grid_texture: Option<Handle<Image>>,
-    #[texture(3)]
-    #[sampler(4)]
-    grid_detail_texture: Option<Handle<Image>>,
-    #[texture(5)]
-    #[sampler(6)]
-    marble_texture: Option<Handle<Image>>,
-    #[texture(7)]
-    #[sampler(8)]
-    marble_detail_texture: Option<Handle<Image>>,
-    #[texture(9)]
-    #[sampler(10)]
-    splat_map_texture: Option<Handle<Image>>,
+    texture: Option<Handle<Image>>,
 }
 
 impl Material for CustomMaterial {
     fn fragment_shader() -> ShaderRef {
         "shaders/custom_material.wgsl".into()
+    }
+}
+
+fn animate_light_direction(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<DirectionalLight>>,
+) {
+    for mut transform in &mut query {
+        transform.rotate_y(time.delta_seconds() * 0.5);
     }
 }

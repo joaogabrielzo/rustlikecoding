@@ -1,3 +1,8 @@
+#import bevy_pbr::mesh_view_bindings
+
+@group(0) @binding(1)
+var<uniform> light: Lights;
+
 struct CustomMaterial {
     color: vec4<f32>,
 }
@@ -6,29 +11,9 @@ struct CustomMaterial {
 var <uniform> material: CustomMaterial;
 
 @group(1) @binding(1)
-var grid_texture: texture_2d<f32>;
+var tex: texture_2d<f32>;
 @group(1) @binding(2)
-var grid_sampler: sampler;
-
-@group(1) @binding(3)
-var grid_detail_texture: texture_2d<f32>;
-@group(1) @binding(4)
-var grid_detail_sampler: sampler;
-
-@group(1) @binding(5)
-var marble_texture: texture_2d<f32>;
-@group(1) @binding(6)
-var marble_sampler: sampler;
-
-@group(1) @binding(7)
-var marble_detail_texture: texture_2d<f32>;
-@group(1) @binding(8)
-var marble_detail_sampler: sampler;
-
-@group(1) @binding(9)
-var splat_map_texture: texture_2d<f32>;
-@group(1) @binding(10)
-var splat_map_sampler: sampler;
+var tex_sampler: sampler;
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
@@ -41,13 +26,17 @@ struct VertexOutput {
 fn fragment(
     input: VertexOutput
 ) -> @location(0) vec4<f32> {
-    let grid_detail_tex = textureSample(grid_detail_texture, grid_detail_sampler, input.uv * 10.0);
-    var grid_tex = textureSample(grid_texture, grid_sampler, input.uv * 10.0);
+    let diffuse_light_direction = vec3(0.0, 1.0, 0.0); // from above
 
-    let marble_detail_tex = textureSample(marble_detail_texture, marble_detail_sampler, input.uv * 10.0);
-    var marble_tex = textureSample(marble_texture, marble_sampler, input.uv * 10.0);
+    let directional_light = light.directional_lights[0];
+    let directional_light_direction = directional_light.direction_to_light;
+    let directional_light_color = directional_light.color.xyz;
 
-    let splat_map = textureSample(splat_map_texture, splat_map_sampler, input.uv);
+    let texture = textureSample(tex, tex_sampler, input.uv);
 
-    return grid_tex * splat_map.x + marble_tex * (1.0 - splat_map.x);
+    let dot_product = saturate(dot(directional_light_direction, normalize(input.world_normal)));
+
+    let diffuse = texture * vec4(dot_product);
+
+    return diffuse;
 }
