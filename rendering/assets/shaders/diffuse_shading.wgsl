@@ -36,14 +36,27 @@ fn fragment(
     let directional_light_color = directional_light.color.xyz;
 
     let heights = textureSample(tex_heights, tex_heights_sampler, input.uv);
+    let heights_texel_size = 1.0 / vec2<f32>(textureDimensions(tex_heights));
 
-    let normals = normalize(input.world_normal);
+    let du = vec2(heights_texel_size.x * 0.5, 0.0);
+    let u1 = textureSample(tex_heights, tex_heights_sampler, input.uv - du);
+    let u2 = textureSample(tex_heights, tex_heights_sampler, input.uv + du);
+
+    let dv = vec2(0.0, heights_texel_size.y * 0.5);
+    let v1 = textureSample(tex_heights, tex_heights_sampler, input.uv - dv);
+    let v2 = textureSample(tex_heights, tex_heights_sampler, input.uv + dv);
+
+    // let tu = vec3(1.0, u2.x - u1.x, 0.0);
+    // let tv = vec3(0.0, v2.x - v1.x, 1.0);
+    // let normals = normalize(cross(tv, tu));
+    let normals = normalize(vec3(u1.x - u2.x, 1.0, v1.x - v2.x));
 
     let texture = textureSample(tex, tex_sampler, input.uv);
+    let main_texel_size = 1.0 / vec2<f32>(textureDimensions(tex));
 
-    let dot_product = saturate(dot(directional_light_direction, normals));
+    let dot_product = saturate(dot(directional_light_direction, normalize(normals)));
 
-    let diffuse = texture * vec4(dot_product);
+    let diffuse = vec4(dot_product);
 
     return diffuse;
 }
