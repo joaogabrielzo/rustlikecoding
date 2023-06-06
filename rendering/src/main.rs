@@ -44,6 +44,12 @@ fn spawn_basic_scene(
     mut materials: ResMut<Assets<CustomMaterial>>,
     assert_server: Res<AssetServer>,
 ) {
+    let default_material = CustomMaterial {
+        color: Color::SEA_GREEN.as_rgba_linear(),
+        texture: Some(assert_server.load("marble_tex.png")),
+        heights: Some(assert_server.load("marble_heights.png")),
+    };
+
     commands.spawn((
         MaterialMeshBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
@@ -56,10 +62,7 @@ fn spawn_basic_scene(
                 rotation: Quat::from_rotation_y(3.0),
                 scale: Vec3::ONE,
             },
-            material: materials.add(CustomMaterial {
-                color: Color::SEA_GREEN.as_rgba_linear(),
-                texture: Some(assert_server.load("marble_tex.png"))
-            }),
+            material: materials.add(default_material.clone()),
             ..default()
         },
         Shape,
@@ -72,10 +75,7 @@ fn spawn_basic_scene(
                 ..Default::default()
             })),
             transform: Transform::from_xyz(5.0, 0.0, 0.0),
-            material: materials.add(CustomMaterial {
-                color: Color::SEA_GREEN,
-                texture: Some(assert_server.load("marble_tex.png"))
-            }),
+            material: materials.add(default_material.clone()),
             ..default()
         },
         Shape,
@@ -121,6 +121,9 @@ struct CustomMaterial {
     #[texture(1)]
     #[sampler(2)]
     texture: Option<Handle<Image>>,
+    #[texture(3)]
+    #[sampler(4)]
+    heights: Option<Handle<Image>>,
 }
 
 impl Material for CustomMaterial {
