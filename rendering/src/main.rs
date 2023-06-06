@@ -47,7 +47,7 @@ fn spawn_basic_scene(
     let default_material = CustomMaterial {
         color: Color::SEA_GREEN.as_rgba_linear(),
         texture: Some(assert_server.load("marble_tex.png")),
-        heights: Some(assert_server.load("marble_heights.png")),
+        heights: Some(assert_server.load("marble_normal.png")),
     };
 
     // commands.spawn((
