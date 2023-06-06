@@ -85,9 +85,10 @@ fn spawn_basic_scene(
         MaterialMeshBundle {
             mesh: meshes.add(Mesh::from(shape::Quad {
                 size: (10.0, 10.0).into(),
-                flip: true
+                flip: true,
             })),
-            transform: Transform::from_xyz(0.0, 16.5, 35.0).with_rotation(Quat::from_rotation_x((-70. as f32).to_radians())),
+            transform: Transform::from_xyz(0.0, 16.5, 35.0)
+                .with_rotation(Quat::from_rotation_x((-70. as f32).to_radians())),
             material: materials.add(default_material.clone()),
             ..default()
         },
@@ -141,7 +142,7 @@ struct CustomMaterial {
 
 impl Material for CustomMaterial {
     fn fragment_shader() -> ShaderRef {
-        "shaders/diffuse_shading.wgsl".into()
+        "shaders/bump_mapping.wgsl".into()
     }
 }
 
