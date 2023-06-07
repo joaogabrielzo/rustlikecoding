@@ -50,50 +50,50 @@ fn spawn_basic_scene(
         heights: Some(assert_server.load("marble_normal.png")),
     };
 
-    // commands.spawn((
-    //     MaterialMeshBundle {
-    //         mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
-    //         transform: Transform {
-    //             translation: Vec3 {
-    //                 x: -10.0,
-    //                 y: 5.0,
-    //                 z: 4.0,
-    //             },
-    //             rotation: Quat::from_rotation_y(3.0),
-    //             scale: Vec3::ONE,
-    //         },
-    //         material: materials.add(default_material.clone()),
-    //         ..default()
-    //     },
-    //     Shape,
-    // ));
-
-    // commands.spawn((
-    //     MaterialMeshBundle {
-    //         mesh: meshes.add(Mesh::from(shape::UVSphere {
-    //             radius: 7.0,
-    //             ..Default::default()
-    //         })),
-    //         transform: Transform::from_xyz(5.0, 0.0, 0.0),
-    //         material: materials.add(default_material.clone()),
-    //         ..default()
-    //     },
-    //     Shape,
-    // ));
-
     commands.spawn((
         MaterialMeshBundle {
-            mesh: meshes.add(Mesh::from(shape::Quad {
-                size: (10.0, 10.0).into(),
-                flip: true,
-            })),
-            transform: Transform::from_xyz(0.0, 16.5, 35.0)
-                .with_rotation(Quat::from_rotation_x((-70. as f32).to_radians())),
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
+            transform: Transform {
+                translation: Vec3 {
+                    x: -10.0,
+                    y: 5.0,
+                    z: 4.0,
+                },
+                rotation: Quat::from_rotation_y(3.0),
+                scale: Vec3::ONE,
+            },
             material: materials.add(default_material.clone()),
             ..default()
         },
         Shape,
     ));
+
+    commands.spawn((
+        MaterialMeshBundle {
+            mesh: meshes.add(Mesh::from(shape::UVSphere {
+                radius: 7.0,
+                ..Default::default()
+            })),
+            transform: Transform::from_xyz(5.0, 0.0, 0.0),
+            material: materials.add(default_material.clone()),
+            ..default()
+        },
+        Shape,
+    ));
+
+    // commands.spawn((
+    //     MaterialMeshBundle {
+    //         mesh: meshes.add(Mesh::from(shape::Quad {
+    //             size: (10.0, 10.0).into(),
+    //             flip: true,
+    //         })),
+    //         transform: Transform::from_xyz(0.0, 16.5, 35.0)
+    //             .with_rotation(Quat::from_rotation_x((-70. as f32).to_radians())),
+    //         material: materials.add(default_material.clone()),
+    //         ..default()
+    //     },
+    //     Shape,
+    // ));
 
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
@@ -142,7 +142,7 @@ struct CustomMaterial {
 
 impl Material for CustomMaterial {
     fn fragment_shader() -> ShaderRef {
-        "shaders/bump_mapping.wgsl".into()
+        "shaders/normal_mapping.wgsl".into()
     }
 }
 
